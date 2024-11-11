@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Minimal Manifest",
+  "version": "1.0.0",
+  "description": "A basic example extension with only required keys",
+  "icons": {
+    "48": "icon.png",
+    "128": "icon.png"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "options_page": "options.html",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [{
+    "matches": ["https://www.linkedin.com/*", "https://employers.indeed.com/*"],
+    "js": ["contentScript.js"],
+    "css": ["global.css"],
+    "run_at": "document_end"
+  }],
+  "permissions": [
+    "tabs"
+  ]
+}

@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --candi-background: 0 0% 100%;
+  --candi-foreground: 222.2 47.4% 11.2%;
+  --candi-primary: 222.2 47.4% 11.2%;
+  --candi-primary-foreground: 210 40% 98%;
+}
