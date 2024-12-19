@@ -753,7 +753,7 @@ Button.displayName = "Button"
 
 const AddToBtn = forwardRef(({ onClick, className, onHover }: any, ref: ForwardedRef<HTMLButtonElement>) => {
   return (
-    <button className={className} onClick={onClick} ref={ref} type='button' onMouseEnter={() => onHover(true)} onMouseLeave={() => onHover(false)}>
+    <button id='CANDI_ADD_TO_BTN' className={className} onClick={onClick} ref={ref} type='button' onMouseEnter={() => onHover(true)} onMouseLeave={() => onHover(false)}>
       <PlusIcon className='size-6' />
       <span>Add To</span>
     </button>
@@ -807,8 +807,8 @@ function Modal({ onClose, fetchCandidate, innerRef }: any) {
       const prevData = localStorage.getItem("CANDI_PREV_DATA");
       const parsedData = JSON.parse(prevData || "{}");
       const { selectedLists, selectedTags } = parsedData?.[window.location.origin] || {};
-      setSelectedLists(selectedLists);
-      setSelectedTags(selectedTags);
+      if (selectedLists) setSelectedLists(selectedLists);
+      if (selectedTags) setSelectedTags(selectedTags);
     });
   }, []) 
 
@@ -877,7 +877,7 @@ function Modal({ onClose, fetchCandidate, innerRef }: any) {
     handleSubscribe(candidate, args);
   }
   return (
-    <div className="modal shadow-md border rounded-md px-3 py-2 min-w-[400px] max-w-[400px] w-full mt-3 bg-white">
+    <div id='CANDI_STORE_MODAL' className="shadow-md border rounded-md px-3 py-2 min-w-[400px] max-w-[400px] w-full mt-3 bg-white">
       <div className='w-full flex flex-col gap-3'>
         <MultiSelect
           options={listsDropdown}
@@ -921,7 +921,7 @@ function Content() {
     {
       website: "https://www.linkedin.com/in/",
       addToBtn: {
-        el: ".artdeco-card > div > div:has(.entry-point.profile-action-compose-option)",
+        el: ".artdeco-card > div > div:has(.entry-point)",
         positionAt: "start",
         className: 'bg-white border-solid border-black border rounded-md flex items-center gap-3 px-5 h-auto self-stretch mr-2 hover:bg-black hover:text-white transition'
       },
@@ -964,6 +964,24 @@ function Content() {
         },
       ]
     },
+    {
+      website: "https://www.meteojob.com/company/applications/pool/application/",
+      addToBtn: {
+        el: "#identity-container",
+        positionAt: "end",
+        className: 'bg-white border-solid border-black border rounded-md flex items-center gap-3 px-5 h-auto self-stretch mr-2 hover:bg-black hover:text-white transition'
+      },
+      extractable: [
+        {
+          el: '#identity-display-name > h2',
+          property: "name"
+        },
+        {
+          el: '#editable-item-personaldata-email',
+          property: "email"
+        },
+      ]
+    }
   ]);
   const [referenceElement, setReferenceElement] = useState(null);
   const [popperElement, setPopperElement] = useState(null);
@@ -992,38 +1010,55 @@ function Content() {
     setCandidateData(data);
   }
 
+  const urlRef = useRef(window.location.href);
   useEffect(() => {
     console.info("Log from candi store chrome extension");
-    
-    window.addEventListener("load", () => {
-      setTimeout(() => {
-        if (!currentPage) return;
-        // Fetch the target element using the selector from the API config
-        const btnPosition = document.querySelector(currentPage.addToBtn.el);
-        if (!btnPosition) return;
+    const handler = () => {
+      if (!currentPage) return;
+      // Fetch the target element using the selector from the API config
+      const btnPosition = document.querySelector(currentPage.addToBtn.el);
+      if (!btnPosition) return;
+      // Create a container for the React button and append it to the target element
+      const buttonContainer = document.createElement("div");
+      buttonContainer.style.display = "flex";
+      buttonContainer.style.alignItems = "center";
+      buttonContainer.style.height = "auto";
+      buttonContainer.style.alignSelf = "stretch";
+      btnPosition.insertAdjacentElement(
+        currentPage.addToBtn.positionAt === "start" ? "afterbegin" : "beforeend",
+        buttonContainer
+      );
 
-        // Create a container for the React button and append it to the target element
-        const buttonContainer = document.createElement("div");
-        buttonContainer.style.display = "flex";
-        buttonContainer.style.alignItems = "center";
-        buttonContainer.style.height = "auto";
-        buttonContainer.style.alignSelf = "stretch";
-        btnPosition.insertAdjacentElement(
-          currentPage.addToBtn.positionAt === "start" ? "afterbegin" : "beforeend",
-          buttonContainer
-        );
-
-        const root = createRoot(buttonContainer);
-        // root.render(<AddToBtn onClick={() => flushSync(() => setIsModalOpen(true))} />);
-        root.render(<AddToBtn ref={setReferenceElement} className={currentPage.addToBtn?.className} onClick={() => flushSync(() => {
-          handleExtractData();
-          modalRef.current.save();
-        })} onHover={(value) => {
-          handleExtractData();
-          setIsModalOpen(value);
-        }} />);
-      }, 3000)
+      const root = createRoot(buttonContainer);
+      // root.render(<AddToBtn onClick={() => flushSync(() => setIsModalOpen(true))} />);
+      root.render(<AddToBtn ref={setReferenceElement} className={currentPage.addToBtn?.className} onClick={() => flushSync(() => {
+        handleExtractData();
+        modalRef.current.save();
+      })} onHover={(value) => {
+        handleExtractData();
+        setIsModalOpen(value);
+      }} />);
+    }
+    let inserted = false;
+    const mutationObserver = new MutationObserver((list, obs) => {
+      const btnPosition = document?.querySelector(currentPage?.addToBtn?.el || "");
+      if (!btnPosition) return;
+      if (!inserted) {
+        inserted = true;
+        handler();
+      }
+      if (inserted && urlRef.current !== window.location.href && !document.body?.querySelector("#CANDI_ADD_TO_BTN")) {
+        urlRef.current = window.location.href;
+        handler();
+      }
     });
+
+    // have the observer observe for changes in children
+    mutationObserver.observe(document.body, {childList: true, subtree: true});
+
+    return () => {
+      mutationObserver.disconnect();
+    }
   }, [currentPage]);
 
   function handleCloseModal() {
@@ -1033,10 +1068,17 @@ function Content() {
   return (
     <>
       {isModalOpen && (
-        <div id='MODAL' onMouseEnter={() => setIsModalOpen(true)} onMouseLeave={() => setIsModalOpen(false)} ref={setPopperElement} style={{
-          ...styles.popper,
-          zIndex: 50
-        }} {...attributes.popper}>
+        <div 
+          id='MODAL' 
+          onMouseEnter={() => setIsModalOpen(true)} 
+          onMouseLeave={() => setIsModalOpen(false)} 
+          ref={setPopperElement}
+          style={{
+            ...styles.popper,
+            zIndex: 50
+          }} 
+          {...attributes.popper}
+        >
           <Modal
             innerRef={modalRef}
             onClose={handleCloseModal}

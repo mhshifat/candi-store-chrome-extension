@@ -15,7 +15,7 @@
     "service_worker": "background.js"
   },
   "content_scripts": [{
-    "matches": ["https://www.linkedin.com/*", "https://employers.indeed.com/*"],
+    "matches": ["https://www.linkedin.com/*", "https://employers.indeed.com/*", "https://www.meteojob.com/*"],
     "js": ["contentScript.js"],
     "css": ["global.css"],
     "run_at": "document_end"
