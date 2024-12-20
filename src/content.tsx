@@ -981,7 +981,21 @@ function Content() {
           property: "email"
         },
       ]
-    }
+    },
+    {
+      website: "https://app-recruteur.hellowork.com/profile/list?searchGuid=",
+      addToBtn: {
+        el: () => document.querySelector("main-component").querySelector("profile-list").querySelector("profile-search").shadowRoot.querySelector(".pdf-container.sticky"),
+        positionAt: "start",
+        className: 'bg-white border-solid border-black border rounded-md flex items-center gap-3 px-5 h-auto self-stretch mr-2 hover:bg-black hover:text-white transition'
+      },
+      extractable: [
+        {
+          el: () => (document.querySelector("profile-search").shadowRoot.querySelector("profile-contact").shadowRoot.querySelector(".infos") as any).innerText,
+          property: "name"
+        },
+      ]
+    },
   ]);
   const [referenceElement, setReferenceElement] = useState(null);
   const [popperElement, setPopperElement] = useState(null);
@@ -1003,8 +1017,8 @@ function Content() {
   const handleExtractData = () => {
     const data = {};
     for (const item of currentPage?.extractable) {
-      const el = item.el ? document.querySelector(item.el) : null;
-      if (item?.value) data[item.property] = item.value(el || data);
+      const el = typeof item.el === "function" ? item.el() : item.el ? document.querySelector(item.el) : null;
+      if ("value" in item && item?.value) data[item.property] = item.value(el || data);
       else data[item.property] = el?.innerHTML;
     }
     setCandidateData(data);
@@ -1016,7 +1030,7 @@ function Content() {
     const handler = () => {
       if (!currentPage) return;
       // Fetch the target element using the selector from the API config
-      const btnPosition = document.querySelector(currentPage.addToBtn.el);
+      const btnPosition = typeof currentPage.addToBtn.el === "function" ? currentPage.addToBtn.el() : document.querySelector(currentPage.addToBtn.el);
       if (!btnPosition) return;
       // Create a container for the React button and append it to the target element
       const buttonContainer = document.createElement("div");
@@ -1041,7 +1055,7 @@ function Content() {
     }
     let inserted = false;
     const mutationObserver = new MutationObserver((list, obs) => {
-      const btnPosition = document?.querySelector(currentPage?.addToBtn?.el || "");
+      const btnPosition = typeof currentPage.addToBtn.el === "function" ? currentPage.addToBtn.el() : document?.querySelector(currentPage?.addToBtn?.el || "");
       if (!btnPosition) return;
       if (!inserted) {
         inserted = true;
